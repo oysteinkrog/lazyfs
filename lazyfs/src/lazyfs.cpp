@@ -799,7 +799,12 @@ int LazyFS::lfs_readdir (const char* path,
         memset (&st, 0, sizeof (st));
         st.st_ino  = de->d_ino;
         st.st_mode = de->d_type << 12;
-        if (filler (buf, de->d_name, &st, 0, FUSE_FILL_DIR_PLUS))
+        // No FUSE_FILL_DIR_PLUS: this stat holds only the inode and type, not
+        // the size LazyFS keeps for unsynced data. With the flag, the kernel
+        // takes st_size = 0 as the file's size and truncates its page cache,
+        // so a shared mapping of an open file (SQLite's -shm) gets SIGBUS.
+        // Without it the kernel looks each entry up through lfs_getattr.
+        if (filler (buf, de->d_name, &st, 0, (fuse_fill_dir_flags)0))
             break;
     }
 
