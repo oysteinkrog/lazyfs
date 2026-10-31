@@ -19,6 +19,7 @@
 #include <spdlog/spdlog.h>
 #include <string>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <sys/types.h>
 #include <thread>
 #include <tuple>
@@ -1966,6 +1967,21 @@ int LazyFS::lfs_readlink (const char* path, char* buf, size_t size) {
         return -errno;
 
     buf[res] = '\0';
+    return 0;
+}
+
+// Reports the backing file system's space. Without statfs, FUSE answers with
+// zero blocks, and a program that checks free space (df, a readiness probe)
+// sees an empty or full disk.
+int LazyFS::lfs_statfs (const char* path, struct statvfs* stbuf) {
+
+    if (this_ ()->FSConfig->log_all_operations) {
+        spdlog::info ("[lazyfs.ops]: {}(path={})", __FUNCTION__, path);
+    }
+
+    if (statvfs (path, stbuf) == -1)
+        return -errno;
+
     return 0;
 }
 

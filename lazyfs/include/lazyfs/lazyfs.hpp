@@ -346,6 +346,8 @@ class LazyFS : public Fusepp::Fuse<LazyFS> {
 
     static int lfs_getattr (const char*, struct stat*, struct fuse_file_info*);
 
+    static int lfs_statfs (const char* path, struct statvfs* stbuf);
+
     static int lfs_readdir (const char* path,
                             void* buf,
                             fuse_fill_dir_t filler,
